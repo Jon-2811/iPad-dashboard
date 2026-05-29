@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Desk Dashboard</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!--
+    背景画像を変えたい場合：
+    1. 好きな画像を background.jpg という名前にして、このフォルダに入れる
+    2. もしくは app.js の CONFIG.backgroundImage を別名に変更する
+  -->
+  <div id="backgroundLayer" class="background-layer"></div>
+  <div class="background-overlay"></div>
+
+  <main class="app">
+    <section class="top">
+      <div class="hero">
+        <div id="clock" class="clock">--:--</div>
+        <div id="date" class="date">----</div>
+      </div>
+
+      <div class="weather card">
+        <div class="label">天気</div>
+        <div id="weatherMain" class="weather-main">取得中...</div>
+        <div id="weatherSub" class="sub">山形市 / Open-Meteo</div>
+      </div>
+    </section>
+
+    <section class="middle">
+      <div class="card countdown">
+        <div class="label">第121回 医師国家試験まで</div>
+        <div id="examDays" class="big">---</div>
+        <div class="sub">正式日程が出たら app.js の examDate を変更。</div>
+      </div>
+
+      <div class="card pomodoro">
+        <div class="label">ポモドーロ</div>
+        <div id="pomoMode" class="mode">作業</div>
+        <div id="pomoDisplay" class="timer-display">25:00</div>
+
+        <div class="pomo-progress">
+          <span id="pomoRound1"></span>
+          <span id="pomoRound2"></span>
+          <span id="pomoRound3"></span>
+          <span id="pomoRound4"></span>
+        </div>
+
+        <div class="buttons">
+          <button id="pomoStart">開始</button>
+          <button id="pomoSkip">次へ</button>
+          <button id="pomoReset">リセット</button>
+        </div>
+        <div class="sub">25分作業 → 5分休憩。4セット後に15分休憩。</div>
+      </div>
+    </section>
+
+    <section class="bottom">
+      <div class="card schedule">
+        <div class="label">今日の予定</div>
+        <div id="scheduleList" class="schedule-list">
+          <div class="empty">予定を読み込み中...</div>
+        </div>
+        <div class="sub">
+          まずは calendar.json に予定を入れる方式。Googleカレンダー連携は次段階で追加。
+        </div>
+      </div>
+
+      <div class="side-column">
+        <div class="card timer">
+          <div class="label">通常タイマー</div>
+          <div id="timerDisplay" class="small-timer-display">10:00</div>
+          <div class="buttons compact">
+            <button data-min="3">3分</button>
+            <button data-min="5">5分</button>
+            <button data-min="10">10分</button>
+            <button id="timerStart">開始</button>
+            <button id="timerReset">リセット</button>
+          </div>
+        </div>
+
+        <div class="card music">
+          <div class="label">音楽</div>
+          <div class="music-title">YouTube Music</div>
+          <div class="sub">
+            アプリでバックグラウンド再生し、この画面は常時表示用に使うのが安定。
+          </div>
+          <a class="music-link" href="youtube-music://">YouTube Musicを開く</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="alarmModal" class="alarm-modal hidden">
+    <div class="alarm-box">
+      <div id="alarmTitle" class="alarm-title">タイマー終了</div>
+      <div id="alarmText" class="alarm-text">お疲れさまでした。</div>
+      <button id="alarmStop">止める</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
