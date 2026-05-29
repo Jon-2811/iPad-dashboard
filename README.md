@@ -1,96 +1,38 @@
-# iPad Desk Dashboard v2
+# iPad Desk Dashboard v4
 
-第6世代iPadで使う想定の、無料・ブラウザベースの卓上ダッシュボードです。
+## v4の変更点
 
-## 追加した機能
+- タイマー終了時の通知音を強化
+- 通知音テストボタンを追加
+- 天気に大きなアイコンを追加
+- 今後12時間の降水確率・降水量から傘判断を表示
+- 背景画像を複数選択可能に変更
+- 背景モード追加
+  - 全ページ同じ
+  - ページごとに変更
+  - 時間で自動変更
+- 背景画像はiPad内のlocalStorageに保存され、GitHubにはアップロードされません
 
-- 好きな背景画像を設定可能
-- 背景を少し薄く表示
-- 背景に暗いオーバーレイを重ねて文字を読みやすくする
-- 背景を少しぼかして文字の視認性を上げる
-- ポモドーロタイマー追加
-  - 25分作業
-  - 5分休憩
-  - 4セット後に15分休憩
+## iPadで音が鳴らないとき
 
-## 入っている機能
+iPad/Safariは自動再生制限があるため、最初に一度「開始」または「通知音テスト」を押してください。
+その後はタイマー終了時に音が鳴りやすくなります。
 
-- 時計
-- 日付
-- 天気
-- 第121回医師国家試験までのカウントダウン
-- ポモドーロタイマー
-- 通常タイマー
-- 簡易カレンダー表示
-- YouTube Musicを開くボタン
+## 傘判断
 
-## 背景画像の変え方
+Open-Meteoから現在天気、気温、今後12時間の降水確率と降水量を取得して表示します。
 
-一番簡単な方法：
+目安:
+- 最大降水確率60%以上、または降水量5mm以上 → 傘
+- 最大降水確率35%以上、または降水量1mm以上 → 折りたたみ傘
+- それ未満 → 傘なしでよさそう
 
-1. 好きな画像を `background.jpg` という名前にする
-2. このフォルダ内に置く
-3. ページを再読み込みする
+## 背景画像
 
-別名にしたい場合は、`app.js` のここを変更します。
+Settings > 背景画像を選ぶ から複数枚選択できます。
+最大6枚まで保存します。画像は圧縮してiPad内に保存します。
+GitHubには送信されません。
 
-```js
-backgroundImage: "background.jpg",
-```
+## Googleカレンダー同期
 
-例：
-
-```js
-backgroundImage: "images/my-background.png",
-```
-
-## 背景の見やすさ調整
-
-`app.js` のここを変更します。
-
-```js
-backgroundOpacity: 0.58,
-backgroundBlurPx: 2,
-```
-
-おすすめ：
-
-- 文字が見にくい → `backgroundOpacity` を 0.40〜0.50 に下げる
-- 背景をもっとはっきり見せたい → `backgroundOpacity` を 0.65〜0.75 に上げる
-- 背景がごちゃつく → `backgroundBlurPx` を 4〜6 に上げる
-
-## ポモドーロ設定の変え方
-
-`app.js` のここを変更します。
-
-```js
-pomodoro: {
-  workMinutes: 25,
-  shortBreakMinutes: 5,
-  longBreakMinutes: 15,
-  roundsBeforeLongBreak: 4
-}
-```
-
-たとえば 50分作業・10分休憩にするなら：
-
-```js
-pomodoro: {
-  workMinutes: 50,
-  shortBreakMinutes: 10,
-  longBreakMinutes: 20,
-  roundsBeforeLongBreak: 3
-}
-```
-
-## iPadでの使い方
-
-1. GitHub Pages、Vercel、Cloudflare Pagesなどにアップロード
-2. iPadのSafariでURLを開く
-3. 共有ボタン → ホーム画面に追加
-4. 横向きでスタンドに置く
-
-## 注意
-
-iPadでは、WebアプリからYouTube Musicの再生情報やジャケット画像を自由に取得するのは難しいです。
-音楽はYouTube Musicアプリでバックグラウンド再生し、このダッシュボードは時計・予定・天気表示用として使うのが安定です。
+`google-apps-script-calendar.gs` をGoogle Apps Scriptに貼り付けてWebアプリ化し、SettingsにURLを貼ってください。

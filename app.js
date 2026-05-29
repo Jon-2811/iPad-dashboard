@@ -1,27 +1,16 @@
 // ===== 基本設定 =====
 const CONFIG = {
-  // 背景画像。好きな画像を background.jpg という名前で置くと反映される。
-  // 例: "images/my-photo.jpg" のようなパスでもOK。
-  backgroundImage: "background.jpg",
+  defaultBackgroundImage: "background.jpg",
+  defaultBackgroundOpacity: 0.58,
+  defaultBackgroundBlurPx: 2,
 
-  // 背景画像の濃さ。0.35〜0.70くらいがおすすめ。
-  backgroundOpacity: 0.58,
-
-  // 背景ぼかし。文字を読みやすくしたいなら 2〜5。
-  backgroundBlurPx: 2,
-
-  // 山形市の緯度経度。変更したい場合はここを変える。
   latitude: 38.2404,
   longitude: 140.3633,
   locationName: "山形市",
 
-  // 国試予定日。正式日程が出たら変更。
-  examDate: "2027-02-07T00:00:00+09:00",
+  defaultExamDate: "2027-02-07",
+  fallbackCalendarJsonUrl: "calendar.json",
 
-  // カレンダー読み込み
-  calendarJsonUrl: "calendar.json",
-
-  // ポモドーロ設定
   pomodoro: {
     workMinutes: 25,
     shortBreakMinutes: 5,
@@ -30,48 +19,203 @@ const CONFIG = {
   }
 };
 
-// ===== 背景画像 =====
-function applyBackground() {
-  const bg = document.getElementById("backgroundLayer");
-  bg.style.setProperty("--dashboard-bg", `url("${CONFIG.backgroundImage}")`);
-  bg.style.opacity = CONFIG.backgroundOpacity;
-  bg.style.filter = `blur(${CONFIG.backgroundBlurPx}px) saturate(0.9)`;
+const LS = {
+  BG_IMAGES: "dashboard.bgImagesDataUrls",
+  BG_OPACITY: "dashboard.bgOpacity",
+  BG_BLUR: "dashboard.bgBlur",
+  BG_MODE: "dashboard.bgMode",
+  BG_ROTATE_MINUTES: "dashboard.bgRotateMinutes",
+  CALENDAR_API_URL: "dashboard.calendarApiUrl",
+  EXAM_DATE: "dashboard.examDate"
+};
+
+// ===== ページ切替 =====
+let currentPage = 0;
+const pages = Array.from(document.querySelectorAll(".page"));
+const navBtns = Array.from(document.querySelectorAll(".nav-btn"));
+const dots = Array.from(document.querySelectorAll(".dot"));
+
+function showPage(index) {
+  currentPage = Math.max(0, Math.min(index, pages.length - 1));
+  pages.forEach((p, i) => p.classList.toggle("active", i === currentPage));
+  navBtns.forEach((b, i) => b.classList.toggle("active", i === currentPage));
+  dots.forEach((d, i) => d.classList.toggle("active", i === currentPage));
+  applyBackground();
 }
 
+navBtns.forEach(btn => {
+  btn.addEventListener("click", () => showPage(Number(btn.dataset.page)));
+});
+
+let touchStartX = 0;
+document.addEventListener("touchstart", (e) => {
+  touchStartX = e.changedTouches[0].clientX;
+}, { passive: true });
+
+document.addEventListener("touchend", (e) => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 70) {
+    if (dx < 0) showPage(currentPage + 1);
+    else showPage(currentPage - 1);
+  }
+}, { passive: true });
+
+showPage(0);
+
+// ===== 背景画像 =====
+function getStoredImages() {
+  try {
+    return JSON.parse(localStorage.getItem(LS.BG_IMAGES) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function getBackgroundImageForMode() {
+  const images = getStoredImages();
+  if (images.length === 0) return `url("${CONFIG.defaultBackgroundImage}")`;
+
+  const mode = localStorage.getItem(LS.BG_MODE) || "same";
+  const rotateMin = Number(localStorage.getItem(LS.BG_ROTATE_MINUTES) || 5);
+
+  let index = 0;
+
+  if (mode === "page") {
+    index = currentPage % images.length;
+  } else if (mode === "time") {
+    index = Math.floor(Date.now() / (rotateMin * 60 * 1000)) % images.length;
+  }
+
+  return `url("${images[index]}")`;
+}
+
+function applyBackground() {
+  const bg = document.getElementById("backgroundLayer");
+  const opacity = localStorage.getItem(LS.BG_OPACITY) ?? CONFIG.defaultBackgroundOpacity;
+  const blur = localStorage.getItem(LS.BG_BLUR) ?? CONFIG.defaultBackgroundBlurPx;
+
+  bg.style.setProperty("--dashboard-bg", getBackgroundImageForMode());
+  bg.style.opacity = opacity;
+  bg.style.filter = `blur(${blur}px) saturate(0.9)`;
+
+  document.getElementById("bgOpacity").value = opacity;
+  document.getElementById("bgBlur").value = blur;
+  document.getElementById("bgMode").value = localStorage.getItem(LS.BG_MODE) || "same";
+  document.getElementById("bgRotateMinutes").value = localStorage.getItem(LS.BG_ROTATE_MINUTES) || "5";
+}
+
+function resizeImageToDataUrl(file, maxWidth = 1800, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById("bgFile").addEventListener("change", async (e) => {
+  const files = Array.from(e.target.files || []);
+  if (files.length === 0) return;
+
+  try {
+    const dataUrls = [];
+    for (const file of files.slice(0, 6)) {
+      dataUrls.push(await resizeImageToDataUrl(file));
+    }
+    localStorage.setItem(LS.BG_IMAGES, JSON.stringify(dataUrls));
+    applyBackground();
+    alert(`${dataUrls.length}枚の背景画像を保存しました。`);
+  } catch (err) {
+    alert("画像の読み込みに失敗しました。枚数を減らすか、別の画像で試してください。");
+  }
+});
+
+document.getElementById("clearBg").addEventListener("click", () => {
+  localStorage.removeItem(LS.BG_IMAGES);
+  applyBackground();
+});
+
+document.getElementById("bgOpacity").addEventListener("input", (e) => {
+  localStorage.setItem(LS.BG_OPACITY, e.target.value);
+  applyBackground();
+});
+
+document.getElementById("bgBlur").addEventListener("input", (e) => {
+  localStorage.setItem(LS.BG_BLUR, e.target.value);
+  applyBackground();
+});
+
+document.getElementById("bgMode").addEventListener("change", (e) => {
+  localStorage.setItem(LS.BG_MODE, e.target.value);
+  applyBackground();
+});
+
+document.getElementById("bgRotateMinutes").addEventListener("change", (e) => {
+  localStorage.setItem(LS.BG_ROTATE_MINUTES, e.target.value);
+  applyBackground();
+});
+
 applyBackground();
+setInterval(applyBackground, 60 * 1000);
 
 // ===== 時計 =====
 function updateClock() {
   const now = new Date();
 
-  const clock = now.toLocaleTimeString("ja-JP", {
+  document.getElementById("clock").textContent = now.toLocaleTimeString("ja-JP", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false
   });
 
-  const date = now.toLocaleDateString("ja-JP", {
+  document.getElementById("date").textContent = now.toLocaleDateString("ja-JP", {
     year: "numeric",
     month: "long",
     day: "numeric",
     weekday: "long"
   });
-
-  document.getElementById("clock").textContent = clock;
-  document.getElementById("date").textContent = date;
 }
 
 setInterval(updateClock, 1000);
 updateClock();
 
 // ===== 国試カウントダウン =====
+function getExamDate() {
+  return localStorage.getItem(LS.EXAM_DATE) || CONFIG.defaultExamDate;
+}
+
 function updateExamCountdown() {
   const today = new Date();
-  const exam = new Date(CONFIG.examDate);
+  const exam = new Date(`${getExamDate()}T00:00:00+09:00`);
   const diff = exam - today;
   const days = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   document.getElementById("examDays").textContent = days;
+  document.getElementById("examDateInput").value = getExamDate();
 }
+
+document.getElementById("saveExamDate").addEventListener("click", () => {
+  const value = document.getElementById("examDateInput").value;
+  if (!value) return;
+  localStorage.setItem(LS.EXAM_DATE, value);
+  updateExamCountdown();
+});
 
 updateExamCountdown();
 setInterval(updateExamCountdown, 60 * 60 * 1000);
@@ -91,19 +235,60 @@ function weatherCodeToText(code) {
     61: "弱い雨",
     63: "雨",
     65: "強い雨",
+    66: "凍雨",
+    67: "強い凍雨",
     71: "弱い雪",
     73: "雪",
     75: "強い雪",
+    77: "雪粒",
     80: "にわか雨",
     81: "強いにわか雨",
     82: "激しいにわか雨",
-    95: "雷雨"
+    85: "にわか雪",
+    86: "強いにわか雪",
+    95: "雷雨",
+    96: "雷雨と雹",
+    99: "激しい雷雨と雹"
   };
   return map[code] ?? "不明";
 }
 
+function weatherCodeToIcon(code) {
+  if ([0, 1].includes(code)) return "☀️";
+  if ([2].includes(code)) return "🌤️";
+  if ([3].includes(code)) return "☁️";
+  if ([45, 48].includes(code)) return "🌫️";
+  if ([51, 53, 55, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "🌧️";
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return "❄️";
+  if ([95, 96, 99].includes(code)) return "⛈️";
+  return "🌡️";
+}
+
+function makeUmbrellaAdvice(maxPop, totalRainMm, currentCode) {
+  const rainyNow = [51,53,55,61,63,65,66,67,80,81,82,95,96,99].includes(currentCode);
+
+  if (rainyNow || totalRainMm >= 5 || maxPop >= 60) {
+    return {
+      text: "☂️ 傘を持って行く",
+      detail: `今後12時間の最大降水確率 ${maxPop}% / 予想降水量 ${totalRainMm.toFixed(1)}mm`
+    };
+  }
+
+  if (totalRainMm >= 1 || maxPop >= 35) {
+    return {
+      text: "🌂 折りたたみ傘が無難",
+      detail: `今後12時間の最大降水確率 ${maxPop}% / 予想降水量 ${totalRainMm.toFixed(1)}mm`
+    };
+  }
+
+  return {
+    text: "傘なしでよさそう",
+    detail: `今後12時間の最大降水確率 ${maxPop}% / 予想降水量 ${totalRainMm.toFixed(1)}mm`
+  };
+}
+
 async function loadWeather() {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.latitude}&longitude=${CONFIG.longitude}&current=temperature_2m,weather_code&timezone=Asia%2FTokyo`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.latitude}&longitude=${CONFIG.longitude}&current=temperature_2m,weather_code&hourly=precipitation_probability,precipitation&forecast_days=2&timezone=Asia%2FTokyo`;
 
   try {
     const res = await fetch(url);
@@ -111,20 +296,43 @@ async function loadWeather() {
     const data = await res.json();
 
     const temp = Math.round(data.current.temperature_2m);
-    const text = weatherCodeToText(data.current.weather_code);
+    const code = data.current.weather_code;
+    const text = weatherCodeToText(code);
+    const icon = weatherCodeToIcon(code);
+
+    const now = new Date();
+    const hours = data.hourly.time.map(t => new Date(t));
+    const targetIndexes = hours
+      .map((d, i) => ({ d, i }))
+      .filter(x => x.d >= now && x.d <= new Date(now.getTime() + 12 * 60 * 60 * 1000))
+      .map(x => x.i);
+
+    const pops = targetIndexes.map(i => data.hourly.precipitation_probability[i] ?? 0);
+    const rains = targetIndexes.map(i => data.hourly.precipitation[i] ?? 0);
+
+    const maxPop = pops.length ? Math.max(...pops) : 0;
+    const totalRainMm = rains.reduce((a, b) => a + b, 0);
+
+    const advice = makeUmbrellaAdvice(maxPop, totalRainMm, code);
 
     document.getElementById("weatherMain").textContent = `${temp}℃ / ${text}`;
+    document.getElementById("weatherIcon").textContent = icon;
+    document.getElementById("umbrellaAdvice").textContent = advice.text;
+    document.getElementById("weatherDetail").textContent = advice.detail;
     document.getElementById("weatherSub").textContent = `${CONFIG.locationName} / Open-Meteo`;
   } catch (e) {
     document.getElementById("weatherMain").textContent = "取得失敗";
-    document.getElementById("weatherSub").textContent = "ネット接続またはAPIを確認";
+    document.getElementById("weatherIcon").textContent = "⚠️";
+    document.getElementById("umbrellaAdvice").textContent = "傘判断できません";
+    document.getElementById("weatherDetail").textContent = "ネット接続またはAPIを確認";
+    document.getElementById("weatherSub").textContent = "天気取得エラー";
   }
 }
 
 loadWeather();
 setInterval(loadWeather, 30 * 60 * 1000);
 
-// ===== カレンダー簡易表示 =====
+// ===== カレンダー表示 =====
 function isToday(dateStr) {
   const d = new Date(dateStr);
   const now = new Date();
@@ -133,7 +341,8 @@ function isToday(dateStr) {
     && d.getDate() === now.getDate();
 }
 
-function formatTime(dateStr) {
+function formatTime(dateStr, allDay) {
+  if (allDay) return "終日";
   return new Date(dateStr).toLocaleTimeString("ja-JP", {
     hour: "2-digit",
     minute: "2-digit",
@@ -141,17 +350,45 @@ function formatTime(dateStr) {
   });
 }
 
+function normalizeEvents(events) {
+  if (!Array.isArray(events)) return [];
+  return events.map(ev => ({
+    title: ev.title || ev.summary || "無題",
+    start: ev.start || ev.startTime,
+    end: ev.end || ev.endTime,
+    allDay: Boolean(ev.allDay)
+  })).filter(ev => ev.start);
+}
+
+async function fetchCalendarEvents() {
+  const apiUrl = localStorage.getItem(LS.CALENDAR_API_URL);
+
+  if (apiUrl) {
+    const res = await fetch(apiUrl, { cache: "no-store" });
+    if (!res.ok) throw new Error("Google Calendar API fetch failed");
+    const data = await res.json();
+    return normalizeEvents(data.events || data);
+  }
+
+  const res = await fetch(CONFIG.fallbackCalendarJsonUrl, { cache: "no-store" });
+  if (!res.ok) throw new Error("calendar.json fetch failed");
+  const data = await res.json();
+  return normalizeEvents(data);
+}
+
 async function loadSchedule() {
   const list = document.getElementById("scheduleList");
+  const status = document.getElementById("scheduleStatus");
 
   try {
-    const res = await fetch(CONFIG.calendarJsonUrl, { cache: "no-store" });
-    if (!res.ok) throw new Error("calendar fetch failed");
-    const events = await res.json();
+    const events = await fetchCalendarEvents();
 
     const todaysEvents = events
       .filter(ev => isToday(ev.start))
       .sort((a, b) => new Date(a.start) - new Date(b.start));
+
+    const usingGoogle = Boolean(localStorage.getItem(LS.CALENDAR_API_URL));
+    status.textContent = usingGoogle ? "Googleカレンダーから取得" : "calendar.json から取得";
 
     if (todaysEvents.length === 0) {
       list.innerHTML = `<div class="empty">今日の予定はありません</div>`;
@@ -160,14 +397,44 @@ async function loadSchedule() {
 
     list.innerHTML = todaysEvents.map(ev => `
       <div class="event">
-        <div class="event-time">${formatTime(ev.start)}</div>
-        <div class="event-title">${ev.title}</div>
+        <div class="event-time">${formatTime(ev.start, ev.allDay)}</div>
+        <div class="event-title">${escapeHtml(ev.title)}</div>
       </div>
     `).join("");
   } catch (e) {
-    list.innerHTML = `<div class="empty">calendar.json を読み込めませんでした</div>`;
+    status.textContent = "読み込み失敗";
+    list.innerHTML = `<div class="empty">SettingsのURL、またはcalendar.jsonを確認してください</div>`;
   }
 }
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (s) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[s]));
+}
+
+const calendarInput = document.getElementById("calendarApiUrl");
+calendarInput.value = localStorage.getItem(LS.CALENDAR_API_URL) || "";
+
+document.getElementById("saveCalendarUrl").addEventListener("click", () => {
+  const value = calendarInput.value.trim();
+  if (!value) {
+    localStorage.removeItem(LS.CALENDAR_API_URL);
+  } else {
+    localStorage.setItem(LS.CALENDAR_API_URL, value);
+  }
+  loadSchedule();
+});
+
+document.getElementById("clearCalendarUrl").addEventListener("click", () => {
+  localStorage.removeItem(LS.CALENDAR_API_URL);
+  calendarInput.value = "";
+  loadSchedule();
+});
 
 loadSchedule();
 setInterval(loadSchedule, 5 * 60 * 1000);
@@ -175,31 +442,64 @@ setInterval(loadSchedule, 5 * 60 * 1000);
 // ===== 共通アラーム =====
 let audioCtx = null;
 
-function beep() {
-  // iPadではユーザー操作後でないと音が鳴らないことがある
+function ensureAudioContext() {
   audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(freq, startTime, duration, gainValue = 0.13) {
+  const ctx = ensureAudioContext();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
   osc.type = "sine";
-  osc.frequency.value = 880;
-  gain.gain.value = 0.13;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(gainValue, startTime + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
   osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-  setTimeout(() => osc.stop(), 600);
+  gain.connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.02);
+}
+
+function playAlarmSound() {
+  const ctx = ensureAudioContext();
+  const now = ctx.currentTime;
+
+  // 少し目立つ3音チャイムを3回
+  for (let r = 0; r < 3; r++) {
+    const offset = r * 1.05;
+    playTone(880, now + offset, 0.22);
+    playTone(1174, now + offset + 0.24, 0.22);
+    playTone(1568, now + offset + 0.48, 0.35);
+  }
 }
 
 function showAlarm(title, text) {
   document.getElementById("alarmTitle").textContent = title;
   document.getElementById("alarmText").textContent = text;
   document.getElementById("alarmModal").classList.remove("hidden");
-  beep();
-  setTimeout(beep, 800);
-  setTimeout(beep, 1600);
+  playAlarmSound();
+
+  // 通知APIは許可されている場合のみ使用
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification(title, { body: text });
+  }
 }
 
 document.getElementById("alarmStop").addEventListener("click", () => {
   document.getElementById("alarmModal").classList.add("hidden");
+});
+
+document.getElementById("testSound").addEventListener("click", async () => {
+  ensureAudioContext();
+  if ("Notification" in window && Notification.permission === "default") {
+    try { await Notification.requestPermission(); } catch {}
+  }
+  playAlarmSound();
 });
 
 // ===== 通常タイマー =====
@@ -217,6 +517,7 @@ function renderTimer() {
 function startTimer() {
   if (timerRunning) return;
 
+  ensureAudioContext();
   timerRunning = true;
   document.getElementById("timerStart").textContent = "一時停止";
 
@@ -250,8 +551,11 @@ document.querySelectorAll("button[data-min]").forEach(btn => {
   });
 });
 
-document.getElementById("timerStart").addEventListener("click", async () => {
-  if (audioCtx?.state === "suspended") await audioCtx.resume();
+document.getElementById("timerStart").addEventListener("click", () => {
+  ensureAudioContext();
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission().catch(() => {});
+  }
   if (timerRunning) pauseTimer();
   else startTimer();
 });
@@ -340,6 +644,7 @@ function advancePomodoro(showNotice = true) {
 function startPomodoro() {
   if (pomoRunning) return;
 
+  ensureAudioContext();
   pomoRunning = true;
   document.getElementById("pomoStart").textContent = "一時停止";
 
@@ -355,13 +660,17 @@ function startPomodoro() {
   }, 1000);
 }
 
-document.getElementById("pomoStart").addEventListener("click", async () => {
-  if (audioCtx?.state === "suspended") await audioCtx.resume();
+document.getElementById("pomoStart").addEventListener("click", () => {
+  ensureAudioContext();
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission().catch(() => {});
+  }
   if (pomoRunning) pausePomodoro();
   else startPomodoro();
 });
 
 document.getElementById("pomoSkip").addEventListener("click", () => {
+  ensureAudioContext();
   advancePomodoro(false);
 });
 

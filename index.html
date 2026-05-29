@@ -10,90 +10,175 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!--
-    背景画像を変えたい場合：
-    1. 好きな画像を background.jpg という名前にして、このフォルダに入れる
-    2. もしくは app.js の CONFIG.backgroundImage を別名に変更する
-  -->
   <div id="backgroundLayer" class="background-layer"></div>
   <div class="background-overlay"></div>
 
   <main class="app">
-    <section class="top">
-      <div class="hero">
-        <div id="clock" class="clock">--:--</div>
-        <div id="date" class="date">----</div>
-      </div>
+    <nav class="page-nav">
+      <button class="nav-btn active" data-page="0">Home</button>
+      <button class="nav-btn" data-page="1">Timer</button>
+      <button class="nav-btn" data-page="2">Settings</button>
+    </nav>
 
-      <div class="weather card">
-        <div class="label">天気</div>
-        <div id="weatherMain" class="weather-main">取得中...</div>
-        <div id="weatherSub" class="sub">山形市 / Open-Meteo</div>
-      </div>
-    </section>
+    <div id="pages" class="pages">
+      <!-- Page 1: Home -->
+      <section class="page page-home">
+        <div class="home-grid">
+          <section class="hero">
+            <div id="clock" class="clock">--:--</div>
+            <div id="date" class="date">----</div>
+          </section>
 
-    <section class="middle">
-      <div class="card countdown">
-        <div class="label">第121回 医師国家試験まで</div>
-        <div id="examDays" class="big">---</div>
-        <div class="sub">正式日程が出たら app.js の examDate を変更。</div>
-      </div>
+          <section class="card weather">
+            <div class="weather-head">
+              <div>
+                <div class="label">天気</div>
+                <div id="weatherMain" class="weather-main">取得中...</div>
+              </div>
+              <div id="weatherIcon" class="weather-icon">☁️</div>
+            </div>
+            <div id="umbrellaAdvice" class="umbrella-advice">傘判断を取得中...</div>
+            <div id="weatherDetail" class="weather-detail">降水確率・降水量を確認中</div>
+            <div id="weatherSub" class="sub">山形市 / Open-Meteo</div>
+          </section>
 
-      <div class="card pomodoro">
-        <div class="label">ポモドーロ</div>
-        <div id="pomoMode" class="mode">作業</div>
-        <div id="pomoDisplay" class="timer-display">25:00</div>
+          <section class="card countdown">
+            <div class="label">第121回 医師国家試験まで</div>
+            <div id="examDays" class="big">---</div>
+            <div class="sub">正式日程が出たら Settings の日付を変更。</div>
+          </section>
 
-        <div class="pomo-progress">
-          <span id="pomoRound1"></span>
-          <span id="pomoRound2"></span>
-          <span id="pomoRound3"></span>
-          <span id="pomoRound4"></span>
+          <section class="card schedule">
+            <div class="label">今日の予定</div>
+            <div id="scheduleStatus" class="sub status-line">読み込み中...</div>
+            <div id="scheduleList" class="schedule-list">
+              <div class="empty">予定を読み込み中...</div>
+            </div>
+          </section>
         </div>
+      </section>
 
-        <div class="buttons">
-          <button id="pomoStart">開始</button>
-          <button id="pomoSkip">次へ</button>
-          <button id="pomoReset">リセット</button>
-        </div>
-        <div class="sub">25分作業 → 5分休憩。4セット後に15分休憩。</div>
-      </div>
-    </section>
+      <!-- Page 2: Timers -->
+      <section class="page page-timer">
+        <div class="timer-grid">
+          <section class="card pomodoro">
+            <div class="label">ポモドーロ</div>
+            <div id="pomoMode" class="mode">作業</div>
+            <div id="pomoDisplay" class="pomo-display">25:00</div>
 
-    <section class="bottom">
-      <div class="card schedule">
-        <div class="label">今日の予定</div>
-        <div id="scheduleList" class="schedule-list">
-          <div class="empty">予定を読み込み中...</div>
-        </div>
-        <div class="sub">
-          まずは calendar.json に予定を入れる方式。Googleカレンダー連携は次段階で追加。
-        </div>
-      </div>
+            <div class="pomo-progress">
+              <span id="pomoRound1"></span>
+              <span id="pomoRound2"></span>
+              <span id="pomoRound3"></span>
+              <span id="pomoRound4"></span>
+            </div>
 
-      <div class="side-column">
-        <div class="card timer">
-          <div class="label">通常タイマー</div>
-          <div id="timerDisplay" class="small-timer-display">10:00</div>
-          <div class="buttons compact">
-            <button data-min="3">3分</button>
-            <button data-min="5">5分</button>
-            <button data-min="10">10分</button>
-            <button id="timerStart">開始</button>
-            <button id="timerReset">リセット</button>
-          </div>
-        </div>
+            <div class="buttons">
+              <button id="pomoStart">開始</button>
+              <button id="pomoSkip">次へ</button>
+              <button id="pomoReset">リセット</button>
+            </div>
+            <div class="sub">25分作業 → 5分休憩。4セット後に15分休憩。終了時は音で通知。</div>
+          </section>
 
-        <div class="card music">
-          <div class="label">音楽</div>
-          <div class="music-title">YouTube Music</div>
-          <div class="sub">
-            アプリでバックグラウンド再生し、この画面は常時表示用に使うのが安定。
-          </div>
-          <a class="music-link" href="youtube-music://">YouTube Musicを開く</a>
+          <section class="card timer">
+            <div class="label">通常タイマー</div>
+            <div id="timerDisplay" class="timer-display">10:00</div>
+            <div class="buttons">
+              <button data-min="3">3分</button>
+              <button data-min="5">5分</button>
+              <button data-min="10">10分</button>
+              <button data-min="30">30分</button>
+              <button id="timerStart">開始</button>
+              <button id="timerReset">リセット</button>
+            </div>
+            <div class="sub">iPadでは一度ボタンを押した後から音が鳴りやすくなります。</div>
+          </section>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <!-- Page 3: Settings -->
+      <section class="page page-settings">
+        <div class="settings-grid">
+          <section class="card">
+            <div class="label">背景画像</div>
+            <div class="sub">画像はiPad内に保存され、GitHubにはアップロードされません。ページごとに画像を変えたり、時間で自動切替できます。</div>
+
+            <input id="bgFile" class="file-input" type="file" accept="image/*" multiple>
+            <div class="buttons settings-buttons">
+              <label class="file-label" for="bgFile">背景画像を選ぶ</label>
+              <button id="clearBg">背景をリセット</button>
+            </div>
+
+            <label class="setting-row">
+              <span>背景モード</span>
+              <select id="bgMode">
+                <option value="same">全ページ同じ</option>
+                <option value="page">ページごとに変更</option>
+                <option value="time">時間で自動変更</option>
+              </select>
+            </label>
+
+            <label class="setting-row">
+              <span>自動切替間隔</span>
+              <select id="bgRotateMinutes">
+                <option value="1">1分</option>
+                <option value="5">5分</option>
+                <option value="15">15分</option>
+                <option value="30">30分</option>
+              </select>
+            </label>
+
+            <label class="setting-row">
+              <span>背景の濃さ</span>
+              <input id="bgOpacity" type="range" min="0.25" max="0.85" value="0.58" step="0.01">
+            </label>
+
+            <label class="setting-row">
+              <span>背景ぼかし</span>
+              <input id="bgBlur" type="range" min="0" max="8" value="2" step="1">
+            </label>
+          </section>
+
+          <section class="card">
+            <div class="label">Googleカレンダー同期</div>
+            <div class="sub">Google Apps ScriptのWebアプリURLをここに貼ると、今日の予定を自動取得します。URLはiPad内に保存されます。</div>
+
+            <textarea id="calendarApiUrl" class="url-input" placeholder="https://script.google.com/macros/s/...../exec?token=好きな合言葉"></textarea>
+
+            <div class="buttons settings-buttons">
+              <button id="saveCalendarUrl">保存して読み込み</button>
+              <button id="clearCalendarUrl">削除</button>
+            </div>
+
+            <label class="setting-row">
+              <span>国試予定日</span>
+              <input id="examDateInput" type="date">
+            </label>
+            <div class="buttons settings-buttons">
+              <button id="saveExamDate">国試日を保存</button>
+              <button id="testSound">通知音テスト</button>
+            </div>
+          </section>
+
+          <section class="card instructions">
+            <div class="label">使い方メモ</div>
+            <ol>
+              <li>左右スワイプ、または上の Home / Timer / Settings でページ切替。</li>
+              <li>天気欄には、気温・天気アイコン・傘判断・降水確率/降水量を表示。</li>
+              <li>ポモドーロと通常タイマーは終了時に音で通知。</li>
+              <li>背景画像は複数選択可能。全ページ同じ、ページ別、時間切替を選べます。</li>
+            </ol>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <div class="page-dots">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
   </main>
 
   <div id="alarmModal" class="alarm-modal hidden">
