@@ -27,6 +27,9 @@ const LS = {
   BG_ROTATE_MINUTES: "dashboard.bgRotateMinutes",
   CARD_OPACITY: "dashboard.cardOpacity",
   ALARM_VOLUME: "dashboard.alarmVolume",
+  STICKY_NOTES: "dashboard.stickyNotes",
+  POMO_DATE: "dashboard.pomoDate",
+  POMO_COUNT: "dashboard.pomoCount",
   CALENDAR_API_URL: "dashboard.calendarApiUrl",
   EXAM_DATE: "dashboard.examDate"
 };
@@ -181,7 +184,7 @@ applyBackground();
 setInterval(applyBackground, 60 * 1000);
 
 function applyCardOpacity() {
-  const value = localStorage.getItem(LS.CARD_OPACITY) || "0.16";
+  const value = localStorage.getItem(LS.CARD_OPACITY) || "0.08";
   document.documentElement.style.setProperty("--card-bg", `rgba(255, 255, 255, ${value})`);
   document.documentElement.style.setProperty("--inner-bg", `rgba(255, 255, 255, ${Math.min(Number(value) + 0.04, 0.55)})`);
   const slider = document.getElementById("cardOpacity");
@@ -199,7 +202,7 @@ if (cardOpacitySlider) {
 applyCardOpacity();
 
 function getAlarmVolume() {
-  return Number(localStorage.getItem(LS.ALARM_VOLUME) || "0.6");
+  return Number(localStorage.getItem(LS.ALARM_VOLUME) || "1.2");
 }
 
 const alarmVolumeSlider = document.getElementById("alarmVolume");
@@ -475,6 +478,108 @@ document.getElementById("clearCalendarUrl").addEventListener("click", () => {
 loadSchedule();
 setInterval(loadSchedule, 5 * 60 * 1000);
 
+
+// ===== 育成ウィジェット / 付箋 =====
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getTodayPomoCount() {
+  const savedDate = localStorage.getItem(LS.POMO_DATE);
+  if (savedDate !== todayKey()) {
+    localStorage.setItem(LS.POMO_DATE, todayKey());
+    localStorage.setItem(LS.POMO_COUNT, "0");
+    return 0;
+  }
+  return Number(localStorage.getItem(LS.POMO_COUNT) || "0");
+}
+
+function incrementTodayPomoCount() {
+  const count = getTodayPomoCount() + 1;
+  localStorage.setItem(LS.POMO_DATE, todayKey());
+  localStorage.setItem(LS.POMO_COUNT, String(count));
+  renderAquarium();
+}
+
+function renderAquarium() {
+  const area = document.getElementById("fishArea");
+  const status = document.getElementById("aquaStatus");
+  if (!area || !status) return;
+
+  const count = getTodayPomoCount();
+  const fishCount = Math.min(count, 12);
+  const fishIcons = ["🐟", "🐠", "🐡", "🦐"];
+
+  area.innerHTML = "";
+  for (let i = 0; i < fishCount; i++) {
+    const fish = document.createElement("div");
+    fish.className = "fish";
+    fish.textContent = fishIcons[i % fishIcons.length];
+    fish.style.left = `${12 + (i * 21) % 78}%`;
+    fish.style.top = `${38 + (i * 29) % 46}%`;
+    fish.style.animationDelay = `${i * 0.35}s`;
+    area.appendChild(fish);
+  }
+
+  status.textContent = `今日の集中 ${count} セット`;
+}
+
+function getStickyNotes() {
+  try {
+    return JSON.parse(localStorage.getItem(LS.STICKY_NOTES) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveStickyNotes(notes) {
+  localStorage.setItem(LS.STICKY_NOTES, JSON.stringify(notes.slice(0, 12)));
+}
+
+function renderStickyNotes() {
+  const list = document.getElementById("stickyList");
+  if (!list) return;
+
+  const notes = getStickyNotes();
+  if (notes.length === 0) {
+    list.innerHTML = `<div class="empty">付箋はまだありません</div>`;
+    return;
+  }
+
+  list.innerHTML = "";
+  notes.forEach((note, index) => {
+    const el = document.createElement("div");
+    el.className = "sticky-note";
+    el.textContent = note;
+    el.title = "タップで削除";
+    el.addEventListener("click", () => {
+      const next = getStickyNotes();
+      next.splice(index, 1);
+      saveStickyNotes(next);
+      renderStickyNotes();
+    });
+    list.appendChild(el);
+  });
+}
+
+const addStickyBtn = document.getElementById("addSticky");
+if (addStickyBtn) {
+  addStickyBtn.addEventListener("click", () => {
+    const input = document.getElementById("stickyInput");
+    const text = input.value.trim();
+    if (!text) return;
+    const notes = getStickyNotes();
+    notes.unshift(text);
+    saveStickyNotes(notes);
+    input.value = "";
+    renderStickyNotes();
+  });
+}
+
+renderAquarium();
+renderStickyNotes();
+
+
 // ===== 共通アラーム =====
 let audioCtx = null;
 
@@ -687,6 +792,7 @@ function advancePomodoro(showNotice = true) {
 
   if (pomoMode === POMO_MODE.WORK) {
     pomoCompletedWorkRounds += 1;
+    incrementTodayPomoCount();
 
     if (pomoCompletedWorkRounds >= CONFIG.pomodoro.roundsBeforeLongBreak) {
       setPomoMode(POMO_MODE.LONG_BREAK);

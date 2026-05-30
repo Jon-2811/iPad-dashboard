@@ -81,6 +81,18 @@
             <div class="sub">25分作業 → 5分休憩。4セット後に15分休憩。終了時は音で通知。</div>
           </section>
 
+          <section class="card aquarium-widget">
+            <div class="label">育成ウィジェット</div>
+            <div class="aquarium">
+              <div id="fishArea" class="fish-area"></div>
+              <div class="waterline"></div>
+              <div class="seaweed seaweed-1">╱╲╱</div>
+              <div class="seaweed seaweed-2">╲╱╲</div>
+            </div>
+            <div id="aquaStatus" class="aqua-status">今日の集中 0 セット</div>
+            <div class="sub">ポモドーロを1回完了するごとに魚が増えます。</div>
+          </section>
+
           <section class="card timer">
             <div class="label">通常タイマー</div>
             <div id="timerDisplay" class="timer-display">10:00</div>
@@ -175,23 +187,23 @@
 
             <label class="setting-row">
               <span>通知音量</span>
-              <input id="alarmVolume" type="range" min="0.05" max="1" value="0.6" step="0.05">
+              <input id="alarmVolume" type="range" min="0.05" max="2" value="1.2" step="0.05">
             </label>
 
             <label class="setting-row">
               <span>カード透明度</span>
-              <input id="cardOpacity" type="range" min="0.08" max="0.45" value="0.16" step="0.01">
+              <input id="cardOpacity" type="range" min="0.02" max="0.45" value="0.08" step="0.01">
             </label>
           </section>
 
           <section class="card instructions">
-            <div class="label">使い方メモ</div>
-            <ol>
-              <li>左右スワイプ、または上の Home / Timer / Settings でページ切替。</li>
-              <li>天気欄には、気温・天気アイコン・傘判断・降水確率/降水量を表示。</li>
-              <li>ポモドーロと通常タイマーは終了時に音で通知。</li>
-              <li>背景画像は複数選択可能。カード透明度と通知音量も調整できます。</li>
-            </ol>
+            <div class="label">付箋メモ</div>
+            <div class="sticky-input-row">
+              <input id="stickyInput" type="text" placeholder="あとで調べること・思いついたこと">
+              <button id="addSticky">追加</button>
+            </div>
+            <div id="stickyList" class="sticky-list"></div>
+            <div class="sub">付箋をタップすると削除できます。</div>
           </section>
         </div>
       </section>

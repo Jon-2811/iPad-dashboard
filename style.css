@@ -1,7 +1,7 @@
 :root {
-  --card-bg: rgba(255, 255, 255, 0.16);
-  --card-border: rgba(255, 255, 255, 0.34);
-  --inner-bg: rgba(255, 255, 255, 0.20);
+  --card-bg: rgba(255, 255, 255, 0.08);
+  --card-border: rgba(255, 255, 255, 0.30);
+  --inner-bg: rgba(255, 255, 255, 0.10);
 }
 
 * {
@@ -41,7 +41,7 @@ body {
   inset: 0;
   background:
     radial-gradient(circle at top left, rgba(255,255,255,0.16), transparent 30%),
-    linear-gradient(180deg, rgba(0,0,0,0.16), rgba(0,0,0,0.26));
+    linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.12));
   z-index: 1;
 }
 
@@ -134,7 +134,7 @@ body {
 .timer-grid {
   height: 100%;
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
+  grid-template-columns: 1fr 0.72fr;
   gap: 14px;
 }
 
@@ -155,7 +155,7 @@ body {
   border: 1px solid var(--card-border);
   border-radius: 26px;
   padding: 20px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 10px 28px rgba(0,0,0,0.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), 0 8px 22px rgba(0,0,0,0.08);
   backdrop-filter: blur(22px) saturate(1.35);
   -webkit-backdrop-filter: blur(22px) saturate(1.35);
   overflow: hidden;
@@ -451,6 +451,102 @@ code {
 
 .dot.active {
   background: var(--inner-bg);
+}
+
+
+.aquarium-widget {
+  min-height: 240px;
+}
+
+.aquarium {
+  position: relative;
+  height: 160px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(130,210,255,0.16), rgba(60,150,220,0.20));
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: inset 0 1px 18px rgba(255,255,255,0.18);
+}
+
+.fish-area {
+  position: absolute;
+  inset: 0;
+}
+
+.fish {
+  position: absolute;
+  font-size: 28px;
+  animation: swim 6s ease-in-out infinite alternate;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.25));
+}
+
+@keyframes swim {
+  from { transform: translateX(-8px); }
+  to { transform: translateX(18px); }
+}
+
+.waterline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 28px;
+  height: 2px;
+  background: rgba(255,255,255,0.30);
+  box-shadow: 0 0 14px rgba(255,255,255,0.35);
+}
+
+.seaweed {
+  position: absolute;
+  bottom: 6px;
+  color: rgba(190,255,220,0.72);
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.seaweed-1 { left: 18px; }
+.seaweed-2 { right: 24px; }
+
+.aqua-status {
+  margin-top: 12px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.sticky-input-row {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 14px;
+}
+
+.sticky-input-row input {
+  flex: 1;
+  border: 1px solid rgba(255,255,255,0.24);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.10);
+  color: white;
+  padding: 12px 14px;
+  font-size: 16px;
+}
+
+.sticky-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  max-height: 120px;
+  overflow: auto;
+}
+
+.sticky-note {
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(255, 245, 160, 0.22);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  font-weight: 700;
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .alarm-modal {
