@@ -184,9 +184,9 @@ applyBackground();
 setInterval(applyBackground, 60 * 1000);
 
 function applyCardOpacity() {
-  const value = localStorage.getItem(LS.CARD_OPACITY) || "0.08";
+  const value = localStorage.getItem(LS.CARD_OPACITY) || "0.025";
   document.documentElement.style.setProperty("--card-bg", `rgba(255, 255, 255, ${value})`);
-  document.documentElement.style.setProperty("--inner-bg", `rgba(255, 255, 255, ${Math.min(Number(value) + 0.04, 0.55)})`);
+  document.documentElement.style.setProperty("--inner-bg", `rgba(255, 255, 255, ${Math.min(Number(value) + 0.018, 0.38)})`);
   const slider = document.getElementById("cardOpacity");
   if (slider) slider.value = value;
 }
@@ -479,51 +479,8 @@ loadSchedule();
 setInterval(loadSchedule, 5 * 60 * 1000);
 
 
-// ===== 育成ウィジェット / 付箋 =====
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
 
-function getTodayPomoCount() {
-  const savedDate = localStorage.getItem(LS.POMO_DATE);
-  if (savedDate !== todayKey()) {
-    localStorage.setItem(LS.POMO_DATE, todayKey());
-    localStorage.setItem(LS.POMO_COUNT, "0");
-    return 0;
-  }
-  return Number(localStorage.getItem(LS.POMO_COUNT) || "0");
-}
-
-function incrementTodayPomoCount() {
-  const count = getTodayPomoCount() + 1;
-  localStorage.setItem(LS.POMO_DATE, todayKey());
-  localStorage.setItem(LS.POMO_COUNT, String(count));
-  renderAquarium();
-}
-
-function renderAquarium() {
-  const area = document.getElementById("fishArea");
-  const status = document.getElementById("aquaStatus");
-  if (!area || !status) return;
-
-  const count = getTodayPomoCount();
-  const fishCount = Math.min(count, 12);
-  const fishIcons = ["🐟", "🐠", "🐡", "🦐"];
-
-  area.innerHTML = "";
-  for (let i = 0; i < fishCount; i++) {
-    const fish = document.createElement("div");
-    fish.className = "fish";
-    fish.textContent = fishIcons[i % fishIcons.length];
-    fish.style.left = `${12 + (i * 21) % 78}%`;
-    fish.style.top = `${38 + (i * 29) % 46}%`;
-    fish.style.animationDelay = `${i * 0.35}s`;
-    area.appendChild(fish);
-  }
-
-  status.textContent = `今日の集中 ${count} セット`;
-}
-
+// ===== 付箋 =====
 function getStickyNotes() {
   try {
     return JSON.parse(localStorage.getItem(LS.STICKY_NOTES) || "[]");
@@ -537,35 +494,42 @@ function saveStickyNotes(notes) {
 }
 
 function renderStickyNotes() {
-  const list = document.getElementById("stickyList");
-  if (!list) return;
+  const lists = [
+    document.getElementById("stickyListHome"),
+    document.getElementById("stickyListTimer")
+  ].filter(Boolean);
 
   const notes = getStickyNotes();
-  if (notes.length === 0) {
-    list.innerHTML = `<div class="empty">付箋はまだありません</div>`;
-    return;
-  }
 
-  list.innerHTML = "";
-  notes.forEach((note, index) => {
-    const el = document.createElement("div");
-    el.className = "sticky-note";
-    el.textContent = note;
-    el.title = "タップで削除";
-    el.addEventListener("click", () => {
-      const next = getStickyNotes();
-      next.splice(index, 1);
-      saveStickyNotes(next);
-      renderStickyNotes();
+  lists.forEach(list => {
+    if (notes.length === 0) {
+      list.innerHTML = `<div class="empty">付箋はまだありません</div>`;
+      return;
+    }
+
+    list.innerHTML = "";
+    notes.forEach((note, index) => {
+      const el = document.createElement("div");
+      el.className = "sticky-note";
+      el.textContent = note;
+      el.title = "タップで削除";
+      el.addEventListener("click", () => {
+        const next = getStickyNotes();
+        next.splice(index, 1);
+        saveStickyNotes(next);
+        renderStickyNotes();
+      });
+      list.appendChild(el);
     });
-    list.appendChild(el);
   });
 }
 
-const addStickyBtn = document.getElementById("addSticky");
-if (addStickyBtn) {
-  addStickyBtn.addEventListener("click", () => {
-    const input = document.getElementById("stickyInput");
+function setupStickyInput(inputId, buttonId) {
+  const input = document.getElementById(inputId);
+  const button = document.getElementById(buttonId);
+  if (!input || !button) return;
+
+  const add = () => {
     const text = input.value.trim();
     if (!text) return;
     const notes = getStickyNotes();
@@ -573,14 +537,20 @@ if (addStickyBtn) {
     saveStickyNotes(notes);
     input.value = "";
     renderStickyNotes();
+  };
+
+  button.addEventListener("click", add);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") add();
   });
 }
 
-renderAquarium();
+setupStickyInput("stickyInputHome", "addStickyHome");
+setupStickyInput("stickyInputTimer", "addStickyTimer");
 renderStickyNotes();
 
-
 // ===== 共通アラーム =====
+
 let audioCtx = null;
 
 function ensureAudioContext() {
@@ -792,7 +762,6 @@ function advancePomodoro(showNotice = true) {
 
   if (pomoMode === POMO_MODE.WORK) {
     pomoCompletedWorkRounds += 1;
-    incrementTodayPomoCount();
 
     if (pomoCompletedWorkRounds >= CONFIG.pomodoro.roundsBeforeLongBreak) {
       setPomoMode(POMO_MODE.LONG_BREAK);

@@ -48,11 +48,22 @@
             
           </section>
 
-          <section class="card schedule">
-            <div class="label">今日の予定</div>
-            <div id="scheduleStatus" class="sub status-line">読み込み中...</div>
-            <div id="scheduleList" class="schedule-list">
-              <div class="empty">予定を読み込み中...</div>
+          <section class="home-bottom">
+            <div class="card schedule">
+              <div class="label">今日の予定</div>
+              <div id="scheduleStatus" class="sub status-line">読み込み中...</div>
+              <div id="scheduleList" class="schedule-list">
+                <div class="empty">予定を読み込み中...</div>
+              </div>
+            </div>
+
+            <div class="card sticky-card home-sticky-card">
+              <div class="label">付箋メモ</div>
+              <div class="sticky-input-row mini">
+                <input id="stickyInputHome" type="text" placeholder="あとでやること">
+                <button id="addStickyHome">追加</button>
+              </div>
+              <div id="stickyListHome" class="sticky-list"></div>
             </div>
           </section>
         </div>
@@ -81,18 +92,6 @@
             <div class="sub">25分作業 → 5分休憩。4セット後に15分休憩。終了時は音で通知。</div>
           </section>
 
-          <section class="card aquarium-widget">
-            <div class="label">育成ウィジェット</div>
-            <div class="aquarium">
-              <div id="fishArea" class="fish-area"></div>
-              <div class="waterline"></div>
-              <div class="seaweed seaweed-1">╱╲╱</div>
-              <div class="seaweed seaweed-2">╲╱╲</div>
-            </div>
-            <div id="aquaStatus" class="aqua-status">今日の集中 0 セット</div>
-            <div class="sub">ポモドーロを1回完了するごとに魚が増えます。</div>
-          </section>
-
           <section class="card timer">
             <div class="label">通常タイマー</div>
             <div id="timerDisplay" class="timer-display">10:00</div>
@@ -118,6 +117,16 @@
               <button id="timerReset">リセット</button>
             </div>
             <div class="sub">自由入力でも、よく使う時間ボタンでも設定できます。</div>
+          </section>
+
+          <section class="card sticky-card timer-sticky-card">
+            <div class="label">付箋メモ</div>
+            <div class="sticky-input-row">
+              <input id="stickyInputTimer" type="text" placeholder="作業中に思いついたこと">
+              <button id="addStickyTimer">追加</button>
+            </div>
+            <div id="stickyListTimer" class="sticky-list"></div>
+            <div class="sub">付箋をタップすると削除できます。</div>
           </section>
         </div>
       </section>
@@ -192,18 +201,17 @@
 
             <label class="setting-row">
               <span>カード透明度</span>
-              <input id="cardOpacity" type="range" min="0.02" max="0.45" value="0.08" step="0.01">
+              <input id="cardOpacity" type="range" min="0.005" max="0.35" value="0.025" step="0.01">
             </label>
           </section>
 
           <section class="card instructions">
-            <div class="label">付箋メモ</div>
-            <div class="sticky-input-row">
-              <input id="stickyInput" type="text" placeholder="あとで調べること・思いついたこと">
-              <button id="addSticky">追加</button>
-            </div>
-            <div id="stickyList" class="sticky-list"></div>
-            <div class="sub">付箋をタップすると削除できます。</div>
+            <div class="label">使い方メモ</div>
+            <ol>
+              <li>カード透明度を最小にすると、背景がかなり見える水のような表示になります。</li>
+              <li>付箋メモはHomeの予定横とTimerページから使えます。</li>
+              <li>通知音が小さい場合は通知音量とiPad本体音量を両方上げてください。</li>
+            </ol>
           </section>
         </div>
       </section>
