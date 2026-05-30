@@ -1,7 +1,7 @@
 // ===== 基本設定 =====
 const CONFIG = {
   defaultBackgroundImage: "background.jpg",
-  defaultBackgroundOpacity: 0.72,
+  defaultBackgroundOpacity: 0.86,
   defaultBackgroundBlurPx: 2,
 
   latitude: 38.2404,
@@ -25,6 +25,8 @@ const LS = {
   BG_BLUR: "dashboard.bgBlur",
   BG_MODE: "dashboard.bgMode",
   BG_ROTATE_MINUTES: "dashboard.bgRotateMinutes",
+  CARD_OPACITY: "dashboard.cardOpacity",
+  ALARM_VOLUME: "dashboard.alarmVolume",
   CALENDAR_API_URL: "dashboard.calendarApiUrl",
   EXAM_DATE: "dashboard.examDate"
 };
@@ -177,6 +179,37 @@ document.getElementById("bgRotateMinutes").addEventListener("change", (e) => {
 
 applyBackground();
 setInterval(applyBackground, 60 * 1000);
+
+function applyCardOpacity() {
+  const value = localStorage.getItem(LS.CARD_OPACITY) || "0.16";
+  document.documentElement.style.setProperty("--card-bg", `rgba(255, 255, 255, ${value})`);
+  document.documentElement.style.setProperty("--inner-bg", `rgba(255, 255, 255, ${Math.min(Number(value) + 0.04, 0.55)})`);
+  const slider = document.getElementById("cardOpacity");
+  if (slider) slider.value = value;
+}
+
+const cardOpacitySlider = document.getElementById("cardOpacity");
+if (cardOpacitySlider) {
+  cardOpacitySlider.addEventListener("input", (e) => {
+    localStorage.setItem(LS.CARD_OPACITY, e.target.value);
+    applyCardOpacity();
+  });
+}
+
+applyCardOpacity();
+
+function getAlarmVolume() {
+  return Number(localStorage.getItem(LS.ALARM_VOLUME) || "0.6");
+}
+
+const alarmVolumeSlider = document.getElementById("alarmVolume");
+if (alarmVolumeSlider) {
+  alarmVolumeSlider.value = String(getAlarmVolume());
+  alarmVolumeSlider.addEventListener("input", (e) => {
+    localStorage.setItem(LS.ALARM_VOLUME, e.target.value);
+  });
+}
+
 
 // ===== 時計 =====
 function updateClock() {
@@ -451,7 +484,7 @@ function ensureAudioContext() {
   return audioCtx;
 }
 
-function playTone(freq, startTime, duration, gainValue = 0.13) {
+function playTone(freq, startTime, duration, gainValue = null) {
   const ctx = ensureAudioContext();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -459,7 +492,8 @@ function playTone(freq, startTime, duration, gainValue = 0.13) {
   osc.type = "sine";
   osc.frequency.value = freq;
   gain.gain.setValueAtTime(0.0001, startTime);
-  gain.gain.exponentialRampToValueAtTime(gainValue, startTime + 0.03);
+  const vol = gainValue ?? getAlarmVolume();
+  gain.gain.exponentialRampToValueAtTime(vol, startTime + 0.03);
   gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
   osc.connect(gain);
@@ -472,12 +506,13 @@ function playAlarmSound() {
   const ctx = ensureAudioContext();
   const now = ctx.currentTime;
 
-  // 少し目立つ3音チャイムを3回
-  for (let r = 0; r < 3; r++) {
-    const offset = r * 1.05;
-    playTone(880, now + offset, 0.22);
-    playTone(1174, now + offset + 0.24, 0.22);
-    playTone(1568, now + offset + 0.48, 0.35);
+  // 目立つ4音チャイムを4回。音量はSettingsで調整。
+  for (let r = 0; r < 4; r++) {
+    const offset = r * 1.12;
+    playTone(784, now + offset, 0.20);
+    playTone(988, now + offset + 0.22, 0.20);
+    playTone(1319, now + offset + 0.44, 0.24);
+    playTone(1760, now + offset + 0.68, 0.32);
   }
 }
 
