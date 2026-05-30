@@ -25,7 +25,7 @@ body {
   background-repeat: no-repeat;
   filter: blur(2px) saturate(0.9);
   transform: scale(1.02);
-  opacity: 0.58;
+  opacity: 0.72;
   z-index: 0;
   transition: background-image 500ms ease, opacity 250ms ease, filter 250ms ease;
 }
@@ -34,8 +34,8 @@ body {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at top left, rgba(255,255,255,0.11), transparent 30%),
-    linear-gradient(180deg, rgba(0,0,0,0.38), rgba(0,0,0,0.70));
+    radial-gradient(circle at top left, rgba(255,255,255,0.16), transparent 30%),
+    linear-gradient(180deg, rgba(0,0,0,0.38), rgba(0,0,0,0.42));
   z-index: 1;
 }
 
@@ -145,13 +145,13 @@ body {
 }
 
 .card {
-  background: rgba(16, 18, 27, 0.56);
-  border: 1px solid rgba(255,255,255,0.17);
+  background: rgba(16, 18, 27, 0.32);
+  border: 1px solid rgba(255,255,255,0.24);
   border-radius: 26px;
   padding: 20px;
-  box-shadow: 0 16px 34px rgba(0,0,0,0.26);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   overflow: hidden;
 }
 
@@ -200,7 +200,7 @@ body {
   margin-top: 18px;
   padding: 16px 18px;
   border-radius: 20px;
-  background: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.18);
   font-size: clamp(24px, 3.2vw, 38px);
   font-weight: 830;
 }
@@ -250,7 +250,7 @@ body {
   gap: 12px;
   padding: 10px 14px;
   border-radius: 16px;
-  background: rgba(255,255,255,0.11);
+  background: rgba(255,255,255,0.16);
 }
 
 .event-time {
@@ -312,6 +312,39 @@ body {
 
 .pomo-progress span.done {
   background: rgba(255,255,255,0.88);
+}
+
+
+.custom-timer {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+}
+
+.custom-timer label {
+  display: grid;
+  gap: 6px;
+  color: #d8dbe4;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.custom-timer input {
+  width: 96px;
+  border: 1px solid rgba(255,255,255,0.24);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.12);
+  color: white;
+  padding: 12px 14px;
+  font-size: 22px;
+  font-weight: 780;
+  text-align: center;
+}
+
+.custom-timer input:focus {
+  outline: 2px solid rgba(255,255,255,0.35);
 }
 
 .buttons {
@@ -391,7 +424,7 @@ input[type="date"] {
 }
 
 code {
-  background: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.18);
   padding: 2px 6px;
   border-radius: 6px;
 }

@@ -1,7 +1,7 @@
 // ===== 基本設定 =====
 const CONFIG = {
   defaultBackgroundImage: "background.jpg",
-  defaultBackgroundOpacity: 0.58,
+  defaultBackgroundOpacity: 0.72,
   defaultBackgroundBlurPx: 2,
 
   latitude: 38.2404,
@@ -36,7 +36,10 @@ const navBtns = Array.from(document.querySelectorAll(".nav-btn"));
 const dots = Array.from(document.querySelectorAll(".dot"));
 
 function showPage(index) {
-  currentPage = Math.max(0, Math.min(index, pages.length - 1));
+  if (index < 0) currentPage = pages.length - 1;
+  else if (index >= pages.length) currentPage = 0;
+  else currentPage = index;
+
   pages.forEach((p, i) => p.classList.toggle("active", i === currentPage));
   navBtns.forEach((b, i) => b.classList.toggle("active", i === currentPage));
   dots.forEach((d, i) => d.classList.toggle("active", i === currentPage));
@@ -550,6 +553,31 @@ document.querySelectorAll("button[data-min]").forEach(btn => {
     renderTimer();
   });
 });
+
+document.getElementById("setCustomTimer").addEventListener("click", () => {
+  const minutes = Math.max(0, Math.min(999, Number(document.getElementById("customMinutes").value || 0)));
+  const seconds = Math.max(0, Math.min(59, Number(document.getElementById("customSeconds").value || 0)));
+  const total = minutes * 60 + seconds;
+
+  if (total <= 0) {
+    alert("1秒以上で設定してください。");
+    return;
+  }
+
+  timerInitial = total;
+  timerSeconds = total;
+  pauseTimer();
+  renderTimer();
+});
+
+["customMinutes", "customSeconds"].forEach(id => {
+  document.getElementById(id).addEventListener("change", () => {
+    const el = document.getElementById(id);
+    const max = id === "customSeconds" ? 59 : 999;
+    el.value = Math.max(0, Math.min(max, Number(el.value || 0)));
+  });
+});
+
 
 document.getElementById("timerStart").addEventListener("click", () => {
   ensureAudioContext();
